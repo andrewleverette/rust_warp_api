@@ -53,3 +53,11 @@ I used [Mockaroo](https://www.mockaroo.com/) to generate a JSON data set of cust
     "address": "String"
 }
 ```
+
+### Dependencies
+
+As of right now, I know that I will need the following dependencies:
+
+* Warp - A web server framework for Rust
+* Tokio - An asynchronous run-time for Rust
+* Serde - A de/serialization library for converting JSON to typed data and vice versa.
