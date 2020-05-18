@@ -61,3 +61,48 @@ As of right now, I know that I will need the following dependencies:
 * Warp - A web server framework for Rust
 * Tokio - An asynchronous run-time for Rust
 * Serde - A de/serialization library for converting JSON to typed data and vice versa.
+
+## Implementation
+
+### Models
+
+The first thing I want to do is define my customer model and also start adding some structure to the code.
+
+In `main.rs`, add a single line to the file so the file looks like this:
+
+```rust
+mod models;
+
+fn main() {
+    println!("Hello, world!");
+}
+```
+
+Then create a new file called `models.rs` and add the following:
+
+```rust
+pub struct Customer {
+    pub guid: String,
+    pub first_name: String,
+    pub last_name: String,
+    pub email: String,
+    pub address: String,
+}
+```
+
+Since I'm designing an API, this data structure needs be able to covert to and from JSON. I also want to be able to copy the structure into and out of the data store without having to worry about the borrow checker. 
+
+To accomplish this I'll add a derive statement to use a couple of the macros from the Serde library and a couple from Rust.
+
+```rust
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Customer {
+    pub guid: String,
+    pub first_name: String,
+    pub last_name: String,
+    pub email: String,
+    pub address: String,
+}
+```
