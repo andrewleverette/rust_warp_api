@@ -13,7 +13,7 @@ This is an example project that uses Warp and Tokio to build a simple asynchrono
 
 ### Design
 
-### Endpoints
+#### Endpoints
 
 ```
 /customers
@@ -25,7 +25,7 @@ This is an example project that uses Warp and Tokio to build a simple asynchrono
     - DELETE -> remove customer from data store
 ```
 
-### Handlers
+#### Handlers
 
 Based on the defined endpoints, I will need the following handlers:
 
@@ -38,7 +38,7 @@ pub async fn update_customer(guid) -> {}
 pub async fn delete_customer(guid) -> {}
 ```
 
-### Database
+#### Database
 
 For right now, I'll just use an in memory data store to share across the route handlers.
 
@@ -62,9 +62,10 @@ As of right now, I know that I will need the following dependencies:
 * Tokio - An asynchronous run-time for Rust
 * Serde - A de/serialization library for converting JSON to typed data and vice versa.
 
-## Implementation
+### Implementation
 
-### Models
+
+#### Models
 
 The first thing I want to do is define my customer model and also start adding some structure to the code.
 
