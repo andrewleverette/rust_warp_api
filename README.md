@@ -34,7 +34,7 @@ Based on the defined routes, I will need the following handlers:
 ```
 list_customers -> return a list all customers in database
 create_customer -> create a new customer and add it to the database
-show_customer -> return the details of a single customer
+get_customer -> return the details of a single customer
 update_customer -> update the details of a single customer
 delete_customer -> delete a customer from the database
 ```
@@ -236,7 +236,7 @@ Now as a reminder, here are the handlers we want to implement:
 
 - list_customers -> return a list all customers in database
 - create_customer -> create a new customer and add it to the - database
-- show_customer -> return the details of a single customer
+- get_customer -> return the details of a single customer
 - update_customer -> update the details of a single customer
 - delete_customer -> delete a customer from the database
 
@@ -302,9 +302,9 @@ pub async fn create_customer(new_customer: Customer, db: Db) -> Result<impl warp
 }
 ```
 
-##### Show Customer
+##### Get Customer
 
-The `show_customer` handler will take a guid and a data store reference as a parameter returns a JSON object of the customer if it is found else it returns a default customer.
+The `get_customer` handler will take a guid and a data store reference as a parameter returns a JSON object of the customer if it is found else it returns a default customer.
 
 Before we write this implementation, we need to add one macro to the `Customer` struct. Update the `Customer` struct in `models.rs` to the following:
 
@@ -322,17 +322,17 @@ pub struct Customer {
 The function definition looks like this:
 
 ```rust
-pub async fn show_customer(guid: String, db: Db) -> Result<Box<dyn warp::Reply>, Infallible> {
+pub async fn get_customer(guid: String, db: Db) -> Result<Box<dyn warp::Reply>, Infallible> {
     
 }
 ```
 
-The return type is a little different than the other functions. The reason is that we need to be able to return either a JSON object or a status code that indicates a bad request. Since `warp::reply::json()` and `StatusCode` implement the `warp::Reply` trait, we can use dynamic dispatching to return the appropriate type.
+The return type is a little different than the other functions. The reason is that we need to be able to return either a JSON object or a status code that indicates a not found error. Since `warp::reply::json()` and `StatusCode` implement the `warp::Reply` trait, we can use [dynamic dispatching](https://doc.rust-lang.org/1.8.0/book/trait-objects.html) to return the appropriate type.
 
 With the proper return type, our function body is fairly straightforward:
 
 ```rust
-pub async fn show_customer(guid: String, db: Db) -> Result<Box<dyn warp::Reply>, Infallible> {
+pub async fn get_customer(guid: String, db: Db) -> Result<Box<dyn warp::Reply>, Infallible> {
     let customers = db.lock().await;
 
     for customer in customers.iter() {
@@ -341,6 +341,27 @@ pub async fn show_customer(guid: String, db: Db) -> Result<Box<dyn warp::Reply>,
         }
     }
 
-    Ok(Box::new(StatusCode::BAD_REQUEST))
+    Ok(Box::new(StatusCode::NOT_FOUND))
 }
 ```
+
+##### Update Customer
+
+The `update_customer` handler will take a customer and a data store reference as an argument and returns a status code of OK if the customer is found and updated or NOT FOUND if the customer is not in the data store.
+
+The function should look like this:
+
+```rust
+pub async fn update_customer(updated_customer: Customer, db: Db) -> Result<impl warp::Reply, Infallible> {
+    let mut customers = db.lock().await;
+
+    for customer in customers.iter_mut() {
+        if customer.guid == updated_customer.guid {
+            *customer = updated_customer;
+            return Ok(StatusCode::OK);
+        }
+    }
+
+    Ok(StatusCode::NOT_FOUND)
+}```
+
