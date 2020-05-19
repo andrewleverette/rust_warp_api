@@ -7,13 +7,14 @@ This is an example project that uses Warp and Tokio to build a simple asynchrono
 ## Goals
 
 1. Become familiar with the Warp framework.
-2. Get a better understanding of API design in Rust
+2. Become more familiar with using async/await in Rust 
+3. Get a better understanding of API design in Rust
 
 ## Notes
 
 ### Design
 
-#### Endpoints
+#### Routes
 
 ```
 /customers
@@ -27,20 +28,19 @@ This is an example project that uses Warp and Tokio to build a simple asynchrono
 
 #### Handlers
 
-Based on the defined endpoints, I will need the following handlers:
+Based on the defined routes, I will need the following handlers:
 
-> These are just function stubs
-```rust
-pub async fn list_customers() -> {}
-pub async fn create_customer() -> {}
-pub async fn show_customer(guid) -> {}
-pub async fn update_customer(guid) -> {}
-pub async fn delete_customer(guid) -> {}
+```
+list_customers -> return a list all customers in database
+create_customer -> create a new customer and add it to the database
+show_customer -> return the details of a single customer
+update_customer -> update the details of a single customer
+delete_customer -> delete a customer from the database
 ```
 
 #### Database
 
-For right now, I'll just use an in memory data store to share across the route handlers.
+For right now, I'll just use an in-memory data store to share across the route handlers.
 
 I used [Mockaroo](https://www.mockaroo.com/) to generate a JSON data set of customer data. The data is a JSON array where each object has the following structure:
 
@@ -53,6 +53,8 @@ I used [Mockaroo](https://www.mockaroo.com/) to generate a JSON data set of cust
     "address": "String"
 }
 ```
+
+Also, the database module will need to have the ability to initialize and save it's current state.
 
 ### Dependencies
 
@@ -69,13 +71,13 @@ As of right now, I know that I will need the following dependencies:
 
 The first thing I want to do is define my customer model and also start adding some structure to the code.
 
-In `main.rs`, add a single line to the file so the file looks like this:
+In `main.rs`, define a new module called `models` like this:
 
 ```rust
 mod models;
 
 fn main() {
-    println!("Hello, world!");
+    // ...
 }
 ```
 
@@ -112,14 +114,14 @@ pub struct Customer {
 
 The database for this example API will be an in-memory database that is a vector of the the `Customer` model. However, the data store will need to be shared across multiple routes, so we can use Rust's [`Arc`](https://doc.rust-lang.org/std/sync/struct.Arc.html) smart pointer along with a [`Mutex`](https://doc.rust-lang.org/std/sync/struct.Mutex.html) to allow for thread safety.
 
-First, update `main.rs` to look like this:
+First, update `main.rs` with a new module called `db`:
 
 ```rust
 mod db;
 mod models;
 
 fn main() {
-    println!("Hello, world!");
+    // ...
 }
 ```
 
@@ -206,3 +208,63 @@ pub fn init_db() -> Db {
     }
 }
 ```
+
+#### Handlers
+
+At this point we have the models and the database setup. Now we need a way to tie them together. That's were the handlers come in.
+
+First lets define a new module in `main.rs` and create a new file called `handlers.rs`.
+
+```rust
+mod handlers;
+```
+
+We also need to add a couple of imports. In the `handlers.rs` file add the following:
+
+```rust
+use std::convert::Infallible;
+use warp;
+
+use crate::models::Customer;
+use crate::db::Db;
+```
+
+This snippet makes the `Customer` model and `Db` type we have defined in the other modules available in the `handlers` module. It also imports the root `warp` module and the [`Infallible`](https://doc.rust-lang.org/std/convert/enum.Infallible.html) enum, which is the error type for errors that can never happen.
+
+Now as a reminder, here are the handlers we want to implement:
+
+- list_customers -> return a list all customers in database
+- create_customer -> create a new customer and add it to the - database
+- show_customer -> return the details of a single customer
+- update_customer -> update the details of a single customer
+- delete_customer -> delete a customer from the database
+
+##### List Customers
+
+The `list_customers` handler will take a reference to the data store as an argument and return a `Result` type that wraps a JSON response.
+
+The function definition will look like this:
+
+```rust
+pub async fn list_customers(db: Db) -> Result<impl warp::Reply, Infallible> {
+   // ... 
+}
+```
+
+For the function body, we need to get the customer list out of the data store and return it as a JSON object. For convenience, `warp` provides a reply method that will convert a vector to a json object.
+
+Update the function with the following:
+
+```rust
+pub async fn list_customers(db: Db) -> Result<impl warp::Reply, Infallible> {
+    let customers = db.lock().await;
+    let customers: Vec<Customer> = customers.clone();
+    Ok(warp::reply::json(&customers))
+}
+```
+
+The line `let customers = db.lock().await;` causes the the current task to yield until a lock can be acquired and the data store can be referenced safely.
+
+The line `let customers: Vec<Customer> = customers.clone()` takes the inner vector out of the `MutexGaurd`.
+
+The last line `Ok(warp::reply::json(&customers))` wraps a JSON reply in a `Ok` variant of the `Result` type.
