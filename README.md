@@ -366,3 +366,27 @@ pub async fn update_customer(updated_customer: Customer, db: Db) -> Result<impl 
 }
 ```
 
+##### Delete Customer
+
+The `delete_customer` handler will take a guid and a reference to the data store as an argument. The function will remove the customer with a matching guid and return a NO CONTENT status code. If a match is not found then it will return a NOT FOUND status code.
+
+The function should look something like this:
+
+```rust
+pub async fn delete_customer(guid: String, db: Db) -> Result<impl warp::Reply, Infallible> {
+    let mut customers = db.lock().await;
+
+    let customer_count = customers.len();
+
+    customers.retain(|customer| {
+        customer.guid != guid
+    });
+
+    let deleted = customers.len() != customer_count;
+    if deleted {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Ok(StatusCode::NOT_FOUND)
+    }
+}
+```

@@ -81,3 +81,31 @@ pub async fn update_customer(updated_customer: Customer, db: Db) -> Result<impl 
 
     Ok(StatusCode::NOT_FOUND)
 }
+
+
+/// Deletes a customer from the data store
+/// 
+/// If the customer exists in the data store, the customer is
+/// removed and a NO CONTENT status code is returned. If the customer
+/// does not exist, a NOT FOUND status code is returned.
+/// 
+/// # Arguments
+/// 
+/// * `guid` - String -> the id of the customer to delete
+/// * `db` - `Db` -> thread safe data store
+pub async fn delete_customer(guid: String, db: Db) -> Result<impl warp::Reply, Infallible> {
+    let mut customers = db.lock().await;
+
+    let customer_count = customers.len();
+
+    customers.retain(|customer| {
+        customer.guid != guid
+    });
+
+    let deleted = customers.len() != customer_count;
+    if deleted {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Ok(StatusCode::NOT_FOUND)
+    }
+}
