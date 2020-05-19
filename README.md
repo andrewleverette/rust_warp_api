@@ -363,5 +363,6 @@ pub async fn update_customer(updated_customer: Customer, db: Db) -> Result<impl 
     }
 
     Ok(StatusCode::NOT_FOUND)
-}```
+}
+```
 
