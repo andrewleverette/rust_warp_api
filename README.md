@@ -390,3 +390,75 @@ pub async fn delete_customer(guid: String, db: Db) -> Result<impl warp::Reply, I
     }
 }
 ```
+
+#### Routes
+
+We now have all the handler functions implemented. Next we need to piece together the routes that will call the handlers.
+
+In `main.rs`, define another module:
+
+```rust
+mod routes;
+```
+
+Then we create a file called `routes.rs` in the `src` directory and add the following:
+
+```rust
+use std::convert::Infallible;
+use warp::{self, Filter};
+
+use crate::db::Db;
+use crate::handlers;
+use crate::models::Customer;
+```
+
+First we need a helper function to pass a reference of the data store into the handlers from the routes.
+
+Add the following to `routes.rs`:
+
+```rust
+fn with_db(db: Db) -> impl Filter<Extract = (Db,), Error = Infallible> {
+    warp::any().map(move || db.clone())
+}
+```
+
+This function allows the data store be injected into the route and passed along into the handler. `Filter` is a trait in the warp library. The `Filter` trait provides functionality to compose routes that are the result of one or more `Filter` methods. This will make more sense with an example.
+
+Just for a reminder, here are the routes we need to define:
+
+```
+/customers
+    - GET -> list all customers in data store
+    - POST -> create new customer and insert into data store
+/customers/{guid}
+    - GET -> list info for a customer
+    - POST -> update information for a customer
+    - DELETE -> remove customer from data store
+```
+
+##### GET /customers
+
+The first route will simply get all customers in the data store. Add the following to the `routes.rs`:
+
+```rust
+pub fn customers_list(db: Db) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path("customers")
+        .and(warp::get())
+        .and(with_db(db))
+        .and_then(handlers::list_customers)
+}
+```
+
+The function returns a type that implements the `Filter` trait. The `Extract` is used when a match occurs and the value of the `Extract` is returned.
+
+Basically the function is defining a route that matches when the requested path is "/customers" and it is a GET request. 
+
+Also, to save some work for later, I'll implement another function that will serve as a wrapper for all the customer routes. It will make it easier later when we hook everything together.
+
+So add the following to `routes.rs`:
+
+```rust
+pub fn customer_routes(db: Db) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    customers_list(db.clone())
+}
+```

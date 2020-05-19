@@ -6,9 +6,9 @@ use crate::db::Db;
 use crate::models::Customer;
 
 /// Returns a list of customers as JSON
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `db` - `Db` -> thread safe vector of Customer objects
 pub async fn list_customers(db: Db) -> Result<impl warp::Reply, Infallible> {
     let customers = db.lock().await;
@@ -17,20 +17,23 @@ pub async fn list_customers(db: Db) -> Result<impl warp::Reply, Infallible> {
 }
 
 /// Creates a new customer
-/// 
+///
 /// Adds a new customer object to the data store if the customer
 /// doesn't already exist
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `new_customer` - `Customer` type
 /// * `db` - `Db` -> thread safe vector of Customer objects
-pub async fn create_customer(new_customer: Customer, db: Db) -> Result<impl warp::Reply, Infallible> {
+pub async fn create_customer(
+    new_customer: Customer,
+    db: Db,
+) -> Result<impl warp::Reply, Infallible> {
     let mut customers = db.lock().await;
 
     for customer in customers.iter() {
         if customer.guid == new_customer.guid {
-            return Ok(StatusCode::BAD_REQUEST)
+            return Ok(StatusCode::BAD_REQUEST);
         }
     }
 
@@ -40,11 +43,11 @@ pub async fn create_customer(new_customer: Customer, db: Db) -> Result<impl warp
 }
 
 /// Gets a single customer from the data store
-/// 
+///
 /// Returns a JSON object of an existing customer. If the customer
 /// is not found, it returns a NOT FOUND status code.
 /// # Arguments
-/// 
+///
 /// * `guid` - String -> the id of the customer to retrieve
 /// * `db` - `Db` -> the thread safe data store
 pub async fn get_customer(guid: String, db: Db) -> Result<Box<dyn warp::Reply>, Infallible> {
@@ -52,7 +55,7 @@ pub async fn get_customer(guid: String, db: Db) -> Result<Box<dyn warp::Reply>, 
 
     for customer in customers.iter() {
         if customer.guid == guid {
-            return Ok(Box::new(warp::reply::json(customer)))
+            return Ok(Box::new(warp::reply::json(customer)));
         }
     }
 
@@ -60,16 +63,19 @@ pub async fn get_customer(guid: String, db: Db) -> Result<Box<dyn warp::Reply>, 
 }
 
 /// Updates an existing customer
-/// 
+///
 /// Overwrites an existing customer in the data store and returns
 /// an OK status code. If the customer is not found, a NOT FOUND status
 /// code is returned.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `updated_customer` - `Customer` -> updated customer info
 /// * `db` - `Db` -> thread safe data store
-pub async fn update_customer(updated_customer: Customer, db: Db) -> Result<impl warp::Reply, Infallible> {
+pub async fn update_customer(
+    updated_customer: Customer,
+    db: Db,
+) -> Result<impl warp::Reply, Infallible> {
     let mut customers = db.lock().await;
 
     for customer in customers.iter_mut() {
@@ -82,15 +88,14 @@ pub async fn update_customer(updated_customer: Customer, db: Db) -> Result<impl 
     Ok(StatusCode::NOT_FOUND)
 }
 
-
 /// Deletes a customer from the data store
-/// 
+///
 /// If the customer exists in the data store, the customer is
 /// removed and a NO CONTENT status code is returned. If the customer
 /// does not exist, a NOT FOUND status code is returned.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `guid` - String -> the id of the customer to delete
 /// * `db` - `Db` -> thread safe data store
 pub async fn delete_customer(guid: String, db: Db) -> Result<impl warp::Reply, Infallible> {
@@ -98,9 +103,7 @@ pub async fn delete_customer(guid: String, db: Db) -> Result<impl warp::Reply, I
 
     let customer_count = customers.len();
 
-    customers.retain(|customer| {
-        customer.guid != guid
-    });
+    customers.retain(|customer| customer.guid != guid);
 
     let deleted = customers.len() != customer_count;
     if deleted {
