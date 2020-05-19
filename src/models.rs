@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Represents a customer
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Customer {
     /// A unique identifier for a customer record
     pub guid: String,

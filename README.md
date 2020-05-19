@@ -268,3 +268,78 @@ The line `let customers = db.lock().await;` causes the the current task to yield
 The line `let customers: Vec<Customer> = customers.clone()` takes the inner vector out of the `MutexGaurd`.
 
 The last line `Ok(warp::reply::json(&customers))` wraps a JSON reply in a `Ok` variant of the `Result` type.
+
+##### Create Customer
+
+The `create_customer` handler will take a `Customer` object and a reference to the data store as an argument and return a created status code if the new customer is added to the customer list or a bad request code if the customer already exists.
+
+Before we get to the function, we need to update the warp import statement to allow the use of status codes.
+
+In `handlers.rs`, change the line `use warp;` to the following:
+
+```rust
+use warp::{self, http::StatusCode};
+```
+
+This will allow the use of `StatusCode` enum as a response.
+
+The function definition will be similar to the `list_customers` handler, so we can just jump into the full definition.
+
+```rust
+pub async fn create_customer(new_customer: Customer, db: Db) -> Result<impl warp::Reply, Infallible> {
+    let mut customers = db.lock().await;
+
+    for customer in customers.iter() {
+        if customer.guid == new_customer.guid {
+            return Ok(StatusCode::BAD_REQUEST)
+        }
+    }
+
+    customers.push(new_customers);
+
+    Ok(StatusCode::Created)
+}
+```
+
+##### Show Customer
+
+The `show_customer` handler will take a guid and a data store reference as a parameter returns a JSON object of the customer if it is found else it returns a default customer.
+
+Before we write this implementation, we need to add one macro to the `Customer` struct. Update the `Customer` struct in `models.rs` to the following:
+
+```rust
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct Customer {
+    pub guid: String,
+    pub first_name: String,
+    pub last_name: String,
+    pub email: String,
+    pub address: String,
+}
+```
+
+The function definition looks like this:
+
+```rust
+pub async fn show_customer(guid: String, db: Db) -> Result<Box<dyn warp::Reply>, Infallible> {
+    
+}
+```
+
+The return type is a little different than the other functions. The reason is that we need to be able to return either a JSON object or a status code that indicates a bad request. Since `warp::reply::json()` and `StatusCode` implement the `warp::Reply` trait, we can use dynamic dispatching to return the appropriate type.
+
+With the proper return type, our function body is fairly straightforward:
+
+```rust
+pub async fn show_customer(guid: String, db: Db) -> Result<Box<dyn warp::Reply>, Infallible> {
+    let customers = db.lock().await;
+
+    for customer in customers.iter() {
+        if customer.guid == guid {
+            return Ok(Box::new(warp::reply::json(customer)))
+        }
+    }
+
+    Ok(Box::new(StatusCode::BAD_REQUEST))
+}
+```
