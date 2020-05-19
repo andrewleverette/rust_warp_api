@@ -107,3 +107,102 @@ pub struct Customer {
     pub address: String,
 }
 ```
+
+#### Database
+
+The database for this example API will be an in-memory database that is a vector of the the `Customer` model. However, the data store will need to be shared across multiple routes, so we can use Rust's [`Arc`](https://doc.rust-lang.org/std/sync/struct.Arc.html) smart pointer along with a [`Mutext`](https://doc.rust-lang.org/std/sync/struct.Mutex.html) to allow for thread safety.
+
+First, update `main.rs` to look like this:
+
+```rust
+mod db;
+mod models;
+
+fn main() {
+    println!("Hello, world!");
+}
+```
+
+Then create a new file called `db.rs`.
+
+There are a few things to do in this file, but the first thing to do is to define what the data store will look like.
+
+A simple data store is just a vector of `Customer` structs, but it needs to be wrapped in a thread safe reference to be able to use multiple references of the data store in multiple asynchronous handlers.
+
+Add the following to `db.rs`:
+
+```rust
+use std::sync::Arc;
+use tokio::sync::Mutex;
+
+use crate::models::Customer;
+
+pub type Db = Arc<Mutex<Vec<Customer>>>;
+```
+
+Now that we have defined the structure of the data store, we need a way to initialize the data store. Initializing the data store has two outcomes, either an empty data store or a data store loaded with data from a data file.
+
+An empty store is rather straight forward.
+
+```rust
+pub fn init_db() -> Db {
+    Arc::new(Mutex::new(Vec::new()))
+}
+```
+
+But in order to load data from a file, we need to add another dependency.
+
+Add the following to the `Cargo.toml` file:
+
+```toml
+serde_json = "1.0"
+```
+
+Now we can update `db.rs` with the following:
+
+```rust
+use std::fs::File;
+use serde_json::from_reader;
+
+pub fn init_db() -> Db {
+    let file = File::open("./data/customers.json");
+    match file => {
+        Ok(json) => {
+            let customers = from_reader(json).unwrap();
+            Arc::new(Mutex::new(customers))
+        },
+        Err(_) => {
+            Arc::new(Mutex::new(Vec::new()))
+        }
+    }
+}
+```
+
+This function attempts to read from the file at `./data/customers.json`. If it is successful, the function returns a data store loaded with the customer data, else it returns an empty vector.
+
+The `db.rs` should look like this now:
+
+```rust
+use std::fs::File;
+use std::sync::Arc;
+
+use serde_json::from_reader;
+use tokio::sync::Mutex;
+
+use crate::models::Customer;
+
+pub type Db = Arc<Mutex<Vec<Customer>>>;
+
+pub fn init_db() -> Db {
+    let file = File::open("./data/customers.json");
+    match file {
+        Ok(json) => {
+            let customers = from_reader(json).unwrap();
+            Arc::new(Mutex::new(customers))
+        },
+        Err(_) => {
+            Arc::new(Mutex::new(Vec::new()))
+        }
+    }
+}
+```
