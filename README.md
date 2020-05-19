@@ -8,7 +8,8 @@ This is an example project that uses Warp and Tokio to build a simple asynchrono
 
 1. Become familiar with the Warp framework.
 2. Become more familiar with using async/await in Rust 
-3. Get a better understanding of API design in Rust
+3. Get more comfortable with Rust's Trait system
+4. Get a better understanding of API design in Rust
 
 ## Notes
 
