@@ -110,7 +110,7 @@ pub struct Customer {
 
 #### Database
 
-The database for this example API will be an in-memory database that is a vector of the the `Customer` model. However, the data store will need to be shared across multiple routes, so we can use Rust's [`Arc`](https://doc.rust-lang.org/std/sync/struct.Arc.html) smart pointer along with a [`Mutext`](https://doc.rust-lang.org/std/sync/struct.Mutex.html) to allow for thread safety.
+The database for this example API will be an in-memory database that is a vector of the the `Customer` model. However, the data store will need to be shared across multiple routes, so we can use Rust's [`Arc`](https://doc.rust-lang.org/std/sync/struct.Arc.html) smart pointer along with a [`Mutex`](https://doc.rust-lang.org/std/sync/struct.Mutex.html) to allow for thread safety.
 
 First, update `main.rs` to look like this:
 
