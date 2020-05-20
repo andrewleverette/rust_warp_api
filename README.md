@@ -462,3 +462,34 @@ pub fn customer_routes(db: Db) -> impl Filter<Extract = impl warp::Reply, Error 
     customers_list(db.clone())
 }
 ```
+
+##### POST /customers
+
+This route will add a new customer to the data store if it doesn't already exist.
+
+One thing to add before we add the function for the route is a helper function to extract the JSON from the POST request body.
+
+Add the following to `routes.rs`:
+
+```rust
+fn json_body() -> impl Filter<Extract = (Customer,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16)
+        .and(warp::body::json())
+}
+```
+
+The function will be very similar to `customers_list` except for the handler. Add the following to `routes.rs`:
+
+```rust
+pub fn create_customer(
+    db: Db,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path("customers")
+        .and(warp::post())
+        .and(json_body())
+        .and(with_db(db))        
+        .and_then(handlers::create_customer)
+}
+```
+
+This function defines a route the matches when the path is "/customers" and it is a post request. Then the JSON from the post request and the data store reference is extracted and passed in to the handler.
