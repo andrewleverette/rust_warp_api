@@ -9,7 +9,8 @@ use crate::models::Customer;
 pub fn customer_routes(
     db: Db,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    customers_list(db.clone())
+    get_customer(db.clone())
+        .or(customers_list(db.clone()))
         .or(create_customer(db.clone()))
 }
 
@@ -23,6 +24,7 @@ pub fn customers_list(
         .and_then(handlers::list_customers)
 }
 
+/// POST /customers
 pub fn create_customer(
     db: Db,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -31,6 +33,16 @@ pub fn create_customer(
         .and(json_body())
         .and(with_db(db))        
         .and_then(handlers::create_customer)
+}
+
+/// GET /customers/{guid}
+pub fn get_customer(
+    db: Db,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("customers" / String)
+        .and(warp::get())
+        .and(with_db(db))
+        .and_then(handlers::get_customer)
 }
 
 fn with_db(db: Db) -> impl Filter<Extract = (Db,), Error = Infallible> + Clone {

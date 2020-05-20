@@ -55,7 +55,7 @@ pub async fn get_customer(guid: String, db: Db) -> Result<Box<dyn warp::Reply>, 
 
     for customer in customers.iter() {
         if customer.guid == guid {
-            return Ok(Box::new(warp::reply::json(customer)));
+            return Ok(Box::new(warp::reply::json(&customer)));
         }
     }
 

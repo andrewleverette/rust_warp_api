@@ -493,3 +493,52 @@ pub fn create_customer(
 ```
 
 This function defines a route the matches when the path is "/customers" and it is a post request. Then the JSON from the post request and the data store reference is extracted and passed in to the handler.
+
+##### GET /customers/{guid}
+
+This route will attempt to retrieve a single customer from the data store.
+
+This route function will introduce the `path!` macro from `warp`. This macro enables us to create a path with a variable.
+
+Add the following to `routes.rs`:
+
+```rust
+pub fn get_customer(
+    db: Db,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("customers" / String)
+        .and(warp::get())
+        .and(with_db(db))
+        .and_then(handlers::get_customer)
+}
+```
+
+This defines a route the will match on "customers/{some string value} and a GET request. It then extracts the data store and passes it into the handler.
+
+One thing to consider for routes is that the most specific route should be checked first otherwise a route may not be matched.
+
+For example if the helper function for the routes is updated to this:
+
+```rust
+pub fn customer_routes(
+    db: Db,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    customers_list(db.clone())
+        .or(create_customer(db.clone()))
+        .or(get_customer(db.clone()))
+}
+```
+
+The `get_customer` route will never match because the share a common root path - "/customers" - which means the customer list route will match "/customers" and "/customers/{guid}".
+
+To fix the mismatch issue, arrange the route so the most specific match is first. Like this:
+
+```rust
+pub fn customer_routes(
+    db: Db,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    get_customer(db.clone())
+        .or(customers_list(db.clone()))
+        .or(create_customer(db.clone()))
+}
+```
