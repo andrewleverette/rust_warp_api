@@ -73,13 +73,14 @@ pub async fn get_customer(guid: String, db: Db) -> Result<Box<dyn warp::Reply>, 
 /// * `updated_customer` - `Customer` -> updated customer info
 /// * `db` - `Db` -> thread safe data store
 pub async fn update_customer(
+    guid: String, 
     updated_customer: Customer,
     db: Db,
 ) -> Result<impl warp::Reply, Infallible> {
     let mut customers = db.lock().await;
 
     for customer in customers.iter_mut() {
-        if customer.guid == updated_customer.guid {
+        if customer.guid == guid {
             *customer = updated_customer;
             return Ok(StatusCode::OK);
         }

@@ -542,3 +542,34 @@ pub fn customer_routes(
         .or(create_customer(db.clone()))
 }
 ```
+
+##### PUT /customers/{guid}
+
+This route will attempt to update a customer if it exists and return an OK status code, otherwise a NOT FOUND status code is returned.
+
+The route will look similar to the create customer route but it will match a different path. Add the following to `routes.rs`:
+
+```rust
+pub fn update_customer(
+    db: Db,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("customers" / String)
+        .and(warp::put())
+        .and(json_body())
+        .and(with_db(db))
+        .and_then(handlers::update_customer)
+}
+```
+
+Then update the customer route wrapper:
+
+```rust
+pub fn customer_routes(
+    db: Db,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    get_customer(db.clone())
+        .or(update_customer(db.clone()))
+        .or(create_customer(db.clone()))
+        .or(customers_list(db))
+}
+```

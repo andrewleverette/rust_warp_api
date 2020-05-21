@@ -10,8 +10,9 @@ pub fn customer_routes(
     db: Db,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     get_customer(db.clone())
-        .or(customers_list(db.clone()))
+        .or(update_customer(db.clone()))
         .or(create_customer(db.clone()))
+        .or(customers_list(db))
 }
 
 /// GET /customers
@@ -31,7 +32,7 @@ pub fn create_customer(
     warp::path("customers")
         .and(warp::post())
         .and(json_body())
-        .and(with_db(db))        
+        .and(with_db(db))
         .and_then(handlers::create_customer)
 }
 
@@ -45,11 +46,21 @@ pub fn get_customer(
         .and_then(handlers::get_customer)
 }
 
+/// PUT /customers/{guid}
+pub fn update_customer(
+    db: Db,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("customers" / String)
+        .and(warp::put())
+        .and(json_body())
+        .and(with_db(db))
+        .and_then(handlers::update_customer)
+}
+
 fn with_db(db: Db) -> impl Filter<Extract = (Db,), Error = Infallible> + Clone {
     warp::any().map(move || db.clone())
 }
 
 fn json_body() -> impl Filter<Extract = (Customer,), Error = warp::Rejection> + Clone {
-    warp::body::content_length_limit(1024 * 16)
-        .and(warp::body::json())
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
