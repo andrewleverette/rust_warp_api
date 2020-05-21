@@ -646,4 +646,4 @@ Here are a couple of ideas:
 
 - Testing can be added to confirm that the endpoints are behaving as expected
 - Functionality can added to the `db` module to allow for saving the data store by overwriting the JSON file.
-- The simple data store could be replaced with an actual database like PostgeSQL or even MongoDB.
+- The simple data store could be replaced with an actual database like PostgreSQL or even MongoDB.
