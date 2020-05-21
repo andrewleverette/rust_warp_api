@@ -573,3 +573,36 @@ pub fn customer_routes(
         .or(customers_list(db))
 }
 ```
+
+##### DELETE /customers/{guid}
+
+The last route simply deletes a customer from the data store if it matches the given guid and then returns a NO CONTENT status code, otherwise a NOT FOUND status code is returned.
+
+Add the following to `routes.rs`:
+
+```rust
+fn delete_customer(
+    db: Db
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("customers" / String)
+        .and(warp::delete())
+        .and(with_db(db))
+        .and_then(handlers::delete_customer)
+}
+```
+
+And then update the customer route wrapper:
+
+```rust
+pub fn customer_routes(
+    db: Db,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    get_customer(db.clone())
+        .or(update_customer(db.clone()))
+        .or(delete_customer(db.clone()))
+        .or(create_customer(db.clone()))
+        .or(customers_list(db))
+}
+```
+
+This finishes up all the routes. Now we can move on to tying everything together.

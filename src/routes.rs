@@ -11,12 +11,13 @@ pub fn customer_routes(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     get_customer(db.clone())
         .or(update_customer(db.clone()))
+        .or(delete_customer(db.clone()))
         .or(create_customer(db.clone()))
         .or(customers_list(db))
 }
 
 /// GET /customers
-pub fn customers_list(
+fn customers_list(
     db: Db,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::path("customers")
@@ -26,7 +27,7 @@ pub fn customers_list(
 }
 
 /// POST /customers
-pub fn create_customer(
+fn create_customer(
     db: Db,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::path("customers")
@@ -37,7 +38,7 @@ pub fn create_customer(
 }
 
 /// GET /customers/{guid}
-pub fn get_customer(
+fn get_customer(
     db: Db,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::path!("customers" / String)
@@ -47,7 +48,7 @@ pub fn get_customer(
 }
 
 /// PUT /customers/{guid}
-pub fn update_customer(
+fn update_customer(
     db: Db,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::path!("customers" / String)
@@ -55,6 +56,15 @@ pub fn update_customer(
         .and(json_body())
         .and(with_db(db))
         .and_then(handlers::update_customer)
+}
+
+fn delete_customer(
+    db: Db
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("customers" / String)
+        .and(warp::delete())
+        .and(with_db(db))
+        .and_then(handlers::delete_customer)
 }
 
 fn with_db(db: Db) -> impl Filter<Extract = (Db,), Error = Infallible> + Clone {
