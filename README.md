@@ -96,7 +96,7 @@ pub struct Customer {
 
 Since I'm designing an API, this data structure needs be able to covert to and from JSON. I also want to be able to copy the structure into and out of the data store without having to worry about the borrow checker. 
 
-To accomplish this I'll add a derive statement to use a couple of the macros from the Serde library and a couple from Rust.
+To accomplish this, I'll add a derive statement to use a couple of the macros from the Serde library and a couple from Rust.
 
 ```rust
 use serde::{Deserialize, Serialize};
@@ -266,7 +266,7 @@ pub async fn list_customers(db: Db) -> Result<impl warp::Reply, Infallible> {
 
 The line `let customers = db.lock().await;` causes the the current task to yield until a lock can be acquired and the data store can be referenced safely.
 
-The line `let customers: Vec<Customer> = customers.clone()` takes the inner vector out of the `MutexGaurd`.
+The line `let customers: Vec<Customer> = customers.clone()` takes the inner vector out of the `MutexGuard`.
 
 The last line `Ok(warp::reply::json(&customers))` wraps a JSON reply in a `Ok` variant of the `Result` type.
 
@@ -645,6 +645,6 @@ This completes a simple API using Rust and the Warp framework. There are improve
 Here are a couple of ideas:
 
 - Testing can be added to confirm that the endpoints are behaving as expected
-- Functionality can added to the `db` module to allow for saving the data store by overwriting the JSON file.
+- Functionality can be added to the `db` module to allow for saving the data store by overwriting the JSON file.
 - The simple data store could be replaced with an actual database like PostgreSQL or even MongoDB.
 - Also, when the server is stopped using an interrupt signal from the command line, an error is thrown. This could be refactored to perform a graceful shutdown.
