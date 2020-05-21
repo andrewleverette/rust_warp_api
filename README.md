@@ -55,7 +55,7 @@ I used [Mockaroo](https://www.mockaroo.com/) to generate a JSON data set of cust
 }
 ```
 
-Also, the database module will need to have the ability to initialize and save it's current state.
+Also, the database module will need to have the ability to initialize the data store once the server starts.
 
 ### Dependencies
 
@@ -606,3 +606,44 @@ pub fn customer_routes(
 ```
 
 This finishes up all the routes. Now we can move on to tying everything together.
+
+#### Main
+
+The `main.rs` will pull all of the pieces together. It will initialize the data store, get all the routes, and start the server. It's also fairly short file, so I'll just show the whole thing:
+
+```rust
+use warp;
+
+mod db;
+mod handlers;
+mod models;
+mod routes;
+
+#[tokio::main]
+async fn main() {
+    let db = db::init_db();
+    let customer_routes = routes::customer_routes(db);
+
+    warp::serve(customer_routes)
+        .run(([127, 0, 0, 1], 3000))
+        .await;
+}
+```
+
+We've already seen the first few lines, so lets go through the main function. 
+
+The function attribute `#[tokio::main]` sets the entry point for the `tokio` runtime. This allows us to declare the `main` function as `async`.
+
+The first two lines of `main` are just calling functions from our modules. The first initializes the data store and the second gets our customer routes wrapper.
+
+The last line uses `warp::server` to create a server and then `run` to start the server on the provided host and port. We use the `await` keyword to yield until the `run` function is finished.
+
+### Review
+
+This completes a simple API using Rust and the Warp framework. There are improvements that can be made however. 
+
+Here are a couple of ideas:
+
+- Testing can be added to confirm that are endpoints are behaving as expected
+- Functionality can added to the `db` module to allow for saving the data store by overwriting the JSON file.
+- The simple data store could be replaced with an actual database like PostgeSQL or even MongoDB.
