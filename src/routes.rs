@@ -58,6 +58,7 @@ fn update_customer(
         .and_then(handlers::update_customer)
 }
 
+/// DELETE /customers/{guid}
 fn delete_customer(
     db: Db
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
